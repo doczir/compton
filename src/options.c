@@ -245,7 +245,16 @@ static void usage(int ret) {
 	    "  Use fixed blur strength instead of adjusting according to window\n"
 	    "  opacity.\n"
 	    "\n"
+		"--blur-method algorithm\n"
+	    "  Specify the algorithm for background blur. It is either one of:\n"
+	    "    convolution (default), kawase\n"
+	    "\n"
+		"--blur-strength level\n"
+    	"  Only valid for '--blur-method kawase'!\n"
+    	"  The strength of the kawase blur as an integer between 1 and 20. Defaults to 5.\n"
+    	"\n"
 	    "--blur-kern matrix\n"
+		"  Only valid for '--blur-method convolution'!\n"
 	    "  Specify the blur convolution kernel, with the following format:\n"
 	    "    WIDTH,HEIGHT,ELE1,ELE2,ELE3,ELE4,ELE5...\n"
 	    "  The element in the center must not be included, it will be forever\n"
@@ -460,6 +469,8 @@ static const struct option longopts[] = {
     {"no-name-pixmap", no_argument, NULL, 320},
     {"log-level", required_argument, NULL, 321},
     {"log-file", required_argument, NULL, 322},
+	{"blur-method", required_argument, NULL, 323},
+	{"blur-strength", required_argument, NULL, 324},
     {"reredir-on-root-change", no_argument, NULL, 731},
     {"glx-reinit-on-root-change", no_argument, NULL, 732},
     {"monitor-repaint", no_argument, NULL, 800},
@@ -669,6 +680,16 @@ void get_cfg(options_t *opt, int argc, char *const *argv, bool shadow_enable,
 			free(opt->logpath);
 			opt->logpath = strdup(optarg);
 			break;
+		case 323:
+			// --blur-method
+			if(parse_blur_method(optarg) >= NUM_BLRMTHD)
+				exit(1);
+			break;
+		case 324:
+			// --blur-strength
+			if(!parse_blur_strength(strtol(optarg, NULL, 0), opt))
+				exit(1);
+			break;
 		case 288:
 			// --invert-color-include
 			condlst_add(&opt->invert_color_list, optarg);
@@ -821,8 +842,14 @@ void get_cfg(options_t *opt, int argc, char *const *argv, bool shadow_enable,
 		opt->track_leader = true;
 	}
 
+	// Blur method kawase is not compatible with the xrender backend
+	if (opt->backend != BKEND_GLX && opt->blur_method == BLRMTHD_KAWASE) {
+		log_error("(): Blur method 'kawase' is incompatible with the XRender backend. Fall back to default.\n");
+		opt->blur_method = BLRMTHD_CONV;
+	}
+
 	// Fill default blur kernel
-	if (opt->blur_background && !opt->blur_kerns[0]) {
+	if (opt->blur_background && (opt->blur_method == BLRMTHD_CONV) && !opt->blur_kerns[0]) {
 		// Convolution filter parameter (box blur)
 		// gaussian or binomial filters are definitely superior, yet looks
 		// like they aren't supported as of xorg-server-1.13.0

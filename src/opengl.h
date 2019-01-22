@@ -264,8 +264,9 @@ free_glx_fbo(session_t *ps, GLuint *pfbo) {
  */
 static inline void
 free_glx_bc_resize(session_t *ps, glx_blur_cache_t *pbc) {
-  free_texture_r(ps, &pbc->textures[0]);
-  free_texture_r(ps, &pbc->textures[1]);
+  for (int i = 0; i < MAX_BLUR_PASS; i++) {
+    free_texture_r(ps, &pbc->textures[i]);
+  }
   pbc->width = 0;
   pbc->height = 0;
 }

@@ -1,6 +1,12 @@
 Compton
 =======
 
+This branch is tryone144s (https://github.com/tryone144/compton) fork with kawase blur rebased on the maintained yshui (https://github.com/yshui/compton) fork of compton.
+
+This branch includes a new blur method: The multi-pass **dual kawase blur**!
+Use it with the `--blur-method kawase` and `--blur-strength LEVEL` options.
+Only works with the `glx` backend!
+
 This is forked from the original Compton because that seems to have become unmaintained.
 
 The current battle plan of this fork is to refactor it to make the code _possible_ to maintain, so potential contributors won't be scared away when they take a look at the code.

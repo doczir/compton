@@ -351,6 +351,19 @@ char *parse_config_libconfig(options_t *opt, const char *config_file, bool *shad
   // --blur-background-fixed
   lcfg_lookup_bool(&cfg, "blur-background-fixed",
       &opt->blur_background_fixed);
+  // --blur-method
+  if(config_lookup_string(&cfg, "blur-method", &sval)) {
+    opt->blur_method = parse_blur_method(sval);
+    if(opt->blur_method >= NUM_BLRMTHD) {
+      log_fatal("Cannot parse \"blur-method\"");
+      exit(1);
+    }
+  }
+  // --blur-strength
+  if(config_lookup_int(&cfg, "blur-strength", &ival) && !parse_blur_strength(ival, opt)) {
+    log_fatal("Cannot parse \"blur-strength\"");
+    exit(1);
+  }
   // --blur-kern
   if (config_lookup_string(&cfg, "blur-kern", &sval) &&
       !parse_conv_kern_lst(sval, opt->blur_kerns, MAX_BLUR_PASS, conv_kern_hasneg)) {
